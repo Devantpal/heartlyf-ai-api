@@ -1,35 +1,53 @@
-from fastapi import FastAPI
+import os
 import numpy as np
 import tensorflow as tf
-import os
+from fastapi import FastAPI
+import uvicorn
 
 # Create FastAPI app
-app = FastAPI()
+app = FastAPI(title="Heartlyf ECG AI API")
 
-# Load the fixed ECG model
-model = tf.keras.models.load_model("ecg_model_fixed.keras", compile=False)
+# Load ECG model
+print("Loading ECG model...")
 
-# Root route (for testing API)
+model = tf.keras.models.load_model(
+    "ecg_model_clean.keras",
+    compile=False
+)
+
+print("Model loaded successfully")
+
+# -----------------------------
+# Root route (API test)
+# -----------------------------
 @app.get("/")
 def home():
-    return {"message": "Heartlyf ECG AI API Running"}
+    return {
+        "status": "running",
+        "service": "Heartlyf ECG AI API"
+    }
 
-# Prediction endpoint
+
+# -----------------------------
+# Prediction route
+# -----------------------------
 @app.post("/predict")
-def predict(data: list):
+def predict(ecg_signal: list):
 
     try:
-        # Convert incoming data to numpy array
-        arr = np.array(data)
+        # Convert input to numpy array
+        data = np.array(ecg_signal)
 
-        # Reshape to model input shape
-        arr = arr.reshape(1, 720, 1)
+        # Reshape for model input
+        data = data.reshape(1, 720, 1)
 
         # Run prediction
-        prediction = model.predict(arr)
+        prediction = model.predict(data)
+
+        result = prediction.tolist()
 
         return {
-            "prediction": prediction.tolist()
+            "prediction": result
         }
 
     except Exception as e:
@@ -37,14 +55,17 @@ def predict(data: list):
             "error": str(e)
         }
 
-# Start server for Render
+
+# -----------------------------
+# Run server
+# -----------------------------
 if __name__ == "__main__":
-    import uvicorn
 
     port = int(os.environ.get("PORT", 10000))
 
     uvicorn.run(
-        app,
+        "app:app",
         host="0.0.0.0",
-        port=port
+        port=port,
+        reload=False
     )
