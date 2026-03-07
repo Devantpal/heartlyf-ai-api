@@ -5,21 +5,29 @@ from fastapi import FastAPI
 
 app = FastAPI()
 
-print("Loading ECG model...")
+model = None
 
-model = tf.keras.models.load_model(
-    "ecg_model_clean.keras",
-    compile=False
-)
+@app.on_event("startup")
+def load_model():
+    global model
+    try:
+        print("Loading ECG model...")
+        model = tf.keras.models.load_model("ecg_model_clean.keras", compile=False)
+        print("Model loaded successfully")
+    except Exception as e:
+        print("MODEL LOAD ERROR:", e)
 
-print("Model loaded successfully")
 
 @app.get("/")
 def home():
     return {"status": "API running"}
 
+
 @app.post("/predict")
 def predict(ecg_signal: list):
+
+    if model is None:
+        return {"error": "Model not loaded"}
 
     try:
         data = np.array(ecg_signal)
