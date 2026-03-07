@@ -1,23 +1,11 @@
 from fastapi import FastAPI
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.models import load_model
-from tensorflow.keras.layers import InputLayer
 
 app = FastAPI()
 
-# Fix compatibility with old model
-class FixedInputLayer(InputLayer):
-    def __init__(self, batch_shape=None, **kwargs):
-        if batch_shape is not None:
-            kwargs["input_shape"] = batch_shape[1:]
-        super().__init__(**kwargs)
-
-model = load_model(
-    "ecg_model.h5",
-    compile=False,
-    custom_objects={"InputLayer": FixedInputLayer}
-)
+# Load the ECG AI model (new .keras format)
+model = tf.keras.models.load_model("ecg_model.keras")
 
 @app.get("/")
 def home():
@@ -26,9 +14,21 @@ def home():
 @app.post("/predict")
 def predict(data: list):
 
-    arr = np.array(data)
-    arr = arr.reshape(1, 720, 1)
+    try:
+        # Convert incoming data to numpy array
+        arr = np.array(data)
 
-    prediction = model.predict(arr)
+        # Reshape according to model input (720 ECG samples)
+        arr = arr.reshape(1, 720, 1)
 
-    return {"prediction": prediction.tolist()}
+        # Run prediction
+        prediction = model.predict(arr)
+
+        return {
+            "prediction": prediction.tolist()
+        }
+
+    except Exception as e:
+        return {
+            "error": str(e)
+        }
