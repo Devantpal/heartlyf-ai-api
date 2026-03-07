@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 import numpy as np
 import tensorflow as tf
+import os
 
 app = FastAPI()
 
-# Load the ECG AI model (new .keras format)
+# Load model
 model = tf.keras.models.load_model("ecg_model.keras")
 
 @app.get("/")
@@ -14,21 +15,18 @@ def home():
 @app.post("/predict")
 def predict(data: list):
 
-    try:
-        # Convert incoming data to numpy array
-        arr = np.array(data)
+    arr = np.array(data)
+    arr = arr.reshape(1, 720, 1)
 
-        # Reshape according to model input (720 ECG samples)
-        arr = arr.reshape(1, 720, 1)
+    prediction = model.predict(arr)
 
-        # Run prediction
-        prediction = model.predict(arr)
+    return {
+        "prediction": prediction.tolist()
+    }
 
-        return {
-            "prediction": prediction.tolist()
-        }
 
-    except Exception as e:
-        return {
-            "error": str(e)
-        }
+# Important for Render deployment
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
