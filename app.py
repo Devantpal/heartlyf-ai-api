@@ -1,10 +1,12 @@
 from fastapi import FastAPI
 import numpy as np
 import tensorflow as tf
+from keras.models import load_model
 
 app = FastAPI()
 
-model = tf.keras.models.load_model("ecg_model.h5", compile=False)
+# Load ECG AI model
+model = load_model("ecg_model.h5", compile=False)
 
 @app.get("/")
 def home():
@@ -13,15 +15,11 @@ def home():
 @app.post("/predict")
 def predict(data: list):
 
-    arr = np.array(data).reshape(1,720,1)
+    arr = np.array(data)
+    arr = arr.reshape(1, 720, 1)
 
     prediction = model.predict(arr)
 
-    result = int(np.argmax(prediction))
-
-    confidence = float(np.max(prediction))
-
     return {
-        "prediction": result,
-        "confidence": confidence
+        "prediction": prediction.tolist()
     }
