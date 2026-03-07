@@ -5,7 +5,12 @@ import os
 
 app = FastAPI()
 
-model = tf.keras.models.load_model("ecg_model.keras", compile=False)
+# Load model using legacy loader (fixes batch_shape issue)
+model = tf.keras.models.load_model(
+    "ecg_model.keras",
+    compile=False,
+    safe_mode=False
+)
 
 @app.get("/")
 def home():
@@ -14,7 +19,7 @@ def home():
 @app.post("/predict")
 def predict(data: list):
 
-    arr = np.array(data).reshape(1,720,1)
+    arr = np.array(data).reshape(1, 720, 1)
     prediction = model.predict(arr)
 
     return {"prediction": prediction.tolist()}
