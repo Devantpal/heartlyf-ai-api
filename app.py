@@ -1,17 +1,11 @@
 from fastapi import FastAPI
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.models import load_model
 import os
 
 app = FastAPI()
 
-# Load model safely
-model = load_model(
-    "ecg_model.keras",
-    compile=False,
-    safe_mode=False
-)
+model = tf.keras.models.load_model("ecg_model.keras", compile=False)
 
 @app.get("/")
 def home():
@@ -21,15 +15,12 @@ def home():
 def predict(data: list):
 
     arr = np.array(data).reshape(1,720,1)
-
     prediction = model.predict(arr)
 
-    return {
-        "prediction": prediction.tolist()
-    }
+    return {"prediction": prediction.tolist()}
 
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT",10000))
+    port = int(os.environ.get("PORT", 10000))
     uvicorn.run(app, host="0.0.0.0", port=port)
