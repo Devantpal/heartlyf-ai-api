@@ -4,7 +4,7 @@ import tensorflow as tf
 
 app = FastAPI()
 
-model = tf.keras.models.load_model("ecg_model.h5")
+model = tf.keras.models.load_model("ecg_model.h5", compile=False)
 
 @app.get("/")
 def home():
