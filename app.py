@@ -3,38 +3,48 @@ import numpy as np
 import tensorflow as tf
 import os
 
+# Create FastAPI app
 app = FastAPI()
 
-# Rebuild model architecture manually
-model = tf.keras.Sequential([
-    tf.keras.layers.Input(shape=(720,1)),
-    tf.keras.layers.Conv1D(32,3,activation="relu"),
-    tf.keras.layers.MaxPooling1D(2),
-    tf.keras.layers.Conv1D(64,3,activation="relu"),
-    tf.keras.layers.MaxPooling1D(2),
-    tf.keras.layers.Flatten(),
-    tf.keras.layers.Dense(64,activation="relu"),
-    tf.keras.layers.Dense(1,activation="sigmoid")
-])
+# Load the fixed ECG model
+model = tf.keras.models.load_model("ecg_model_fixed.keras", compile=False)
 
-# Load trained weights
-model.load_weights("ecg_model.keras")
-
+# Root route (for testing API)
 @app.get("/")
 def home():
     return {"message": "Heartlyf ECG AI API Running"}
 
+# Prediction endpoint
 @app.post("/predict")
-def predict(data:list):
+def predict(data: list):
 
-    arr = np.array(data).reshape(1,720,1)
+    try:
+        # Convert incoming data to numpy array
+        arr = np.array(data)
 
-    prediction = model.predict(arr)
+        # Reshape to model input shape
+        arr = arr.reshape(1, 720, 1)
 
-    return {"prediction":prediction.tolist()}
+        # Run prediction
+        prediction = model.predict(arr)
 
+        return {
+            "prediction": prediction.tolist()
+        }
 
+    except Exception as e:
+        return {
+            "error": str(e)
+        }
+
+# Start server for Render
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT",10000))
-    uvicorn.run(app,host="0.0.0.0",port=port)
+
+    port = int(os.environ.get("PORT", 10000))
+
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=port
+    )
