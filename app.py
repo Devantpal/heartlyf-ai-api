@@ -1,6 +1,6 @@
+from fastapi import FastAPI, Form
 import numpy as np
 import tensorflow as tf
-from fastapi import FastAPI, Form
 
 # Create FastAPI app FIRST
 app = FastAPI()
@@ -22,12 +22,12 @@ def home():
 @app.post("/predict")
 def predict(ecg_signal: str = Form(...)):
 
-    # Convert comma-separated string to list
+    # Convert string to list
     values = [float(x) for x in ecg_signal.split(",")]
 
     data = np.array(values, dtype=np.float32)
 
-    # Pad or trim to 720 samples
+    # Pad to 720
     if len(data) < 720:
         data = np.pad(data, (0, 720 - len(data)), 'constant')
     else:
@@ -36,7 +36,6 @@ def predict(ecg_signal: str = Form(...)):
     data = data.reshape(1, 720, 1)
 
     prediction = infer(tf.constant(data))
-
     result = list(prediction.values())[0].numpy()
 
     return {"prediction": result.tolist()}
