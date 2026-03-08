@@ -9,13 +9,15 @@ print("Loading ECG model...")
 # Load TensorFlow SavedModel
 model = tf.saved_model.load("ecg_saved_model")
 
-infer = model.signatures["serve"]
+infer = model.signatures["serving_default"]
 
 print("Model loaded successfully")
+
 
 @app.get("/")
 def home():
     return {"status": "ECG AI API running"}
+
 
 @app.post("/predict")
 def predict(ecg_signal: list):
