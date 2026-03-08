@@ -2,3 +2,4 @@ fastapi
 uvicorn
 tensorflow==2.15.0
 numpy
+python-multipart
